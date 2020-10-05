@@ -1,0 +1,72 @@
+---
+title: "Kolik krajských mandátů získaly parlamentní strany?"
+output:
+  html_document:
+    df_print: paged
+---
+
+Ąplikace pro sledování výsledků krajských voleb, včetně [té na iROZHLAS.cz](https://www.irozhlas.cz/volby/krajske-volby-2020), sčítají získané mandáty nejčastěji podle *kandidujících stran*. V letošních volbách jich kandidovalo 85 a z nich 37 získalo alespoň jeden mandát:
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(readr)
+library(tidyverse)
+library(openxlsx)
+kzrk <- read_csv2("KZ2020reg20201004_csv/kzrk.csv", locale=locale(encoding="cp1250"))
+kzrkl_s <- read_csv2("KZ2020reg20201004_csv/kzrkl_s.csv", locale=locale(encoding="cp1250"))
+kzrkl <- read_csv2("KZ2020reg20201004_csv/kzrkl.csv", locale=locale(encoding="cp1250"))
+kzrkl_s %>%
+  select(1, 4, 12)
+```
+Krajské volby se vyznačují tím, že v nich vzniká **hodně koalic**, v každém kraji trochu jiná konstelace. Mimo jiné i proto, že na rozdíl od voleb parlamentních se koalicím nezvyšuje laťka pro vstup do zastupitelstva. Bez ohledu na to, kolik stran se do koalice spojí, uskupení vždy stačí 5 procent hlasů, aby ve volbách uspělo a získalo nějaké zastupitele.
+
+Při povolebních vyjednáváních v jednotlivých krajích to žádnou roli nehraje, ale **při celostátní interpretaci výsledků voleb se v médiích a v politickém marketingu podle potřeby operuje s různými metodami sčítání získaných mandátů**.
+
+Například ODS podle naší sčítací aplikac získala letos v zastupitelstvech 53 mandátů. [V reklamě se ovšem tatáž strana chlubí](https://www.facebook.com/ods.cz/posts/10158829041272700), že má mandátů 114. Jak je to možné?
+
+ODS kandidovala samostatně v šesti krajích, ve zbývajících sedmi pak ve dvou- či tříčlenných koalicích, nejčastěji s TOP 09, ale také se Starosty, Svobodnými, KDU-ČSL, Soukromníky či místními formacemi.
+
+**Média měří straně nejpřísnějším možným metrem**: Za „její“ zastupitele počítají pouze ty, kteří se do zastupitelstev dostali na jednobarevných kandidátkách. Naopak **ODS svůj úspěch ve volbách přifukuje** a přisvojuje si i úspěšné kandidáty koaličních partnerů. Za „svého“ zastupitele počítá každého, kdo uspěl na kterékoli kandidátce, na níž měla i své kandidáty. A to i když je členem jiné strany a jiná strana ho na kandidátku i navrhla.
+
+Přesnější způsob, jak získané mandáty u stran s celostátní působností sečíst, je podívat se na *stranickou příslušnost* zvolených kandidátů nebo právě na *navrhující stranu*. Při použití první metody dojdeme u ODS k **95 krajským zastupitelům, s tou druhou jich má 99**. To znamená, že z nestraníků, jež na kandidátky navrhla ODS, se do zastupitelstev dostali čtyři.
+
+Jak vychází tento součet u ostatních parlamentních stran, které mají ve sněmovně vlastní klub?
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
+zjistiKoalice <- function(vstrana) {
+result <-   kzrkl_s %>%
+    filter(str_detect(SLOZENI, vstrana)) %>%
+    select(1)
+return(result)
+}
+
+parl_strany_VSTRANA <- c(768, 53, 720, 1114, 7, 47, 1, 721, 166)
+parl_strany_KSTRANA <- c(50, 33, 19, 16, 45, 63, 12, NA, 7)
+parl_strany_NAZEV <- c("ANO", "ODS", "Piráti", "SPD", "ČSSD", "KSČM", "KDU-ČSL", "TOP 09", "STAN")
+
+
+spocitejZvoleneNSTRANA <- function(kod) {
+  result <- kzrk %>%
+    filter(MANDAT == "A") %>% 
+    filter(NSTRANA == kod)
+  return(nrow(result))
+}
+
+spocitejZvoleneKSTRANA <- function(kod) {
+  result <- kzrk %>%
+    filter(MANDAT == "A") %>% 
+    filter(KSTRANA == kod)
+  return(nrow(result))
+}
+
+koalice <- unlist(map(parl_strany_VSTRANA, spocitejZvoleneNSTRANA))
+
+ciste <- unlist(map(parl_strany_KSTRANA, spocitejZvoleneKSTRANA))
+
+result <- data.frame(parl_strany_NAZEV, ciste, koalice) %>%
+  arrange(desc(koalice))
+
+names(result) <- c("strana", "jen čisté kandidátky", "včetně koalic")
+
+result
+```
+

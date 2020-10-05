@@ -1,0 +1,14 @@
+---
+title: "Preferenční hlasy"
+output: html_notebook
+---
+
+
+```{r}
+library(readr)
+library(dplyr)
+pref_only <- read_csv("prefOnly.csv")
+preference <- read_csv("preference.csv")
+pref_vysoup <- read_csv("prefVysoup.csv")
+```
+

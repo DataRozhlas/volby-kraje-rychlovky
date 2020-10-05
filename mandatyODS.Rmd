@@ -1,0 +1,32 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Nemá ODS mnohem víc mandátů než se na první pohled jeví?
+```{r}
+library(readr)
+library(tidyverse)
+library(openxlsx)
+kzrk <- read_csv2("KZ2020reg20201004_csv/kzrk.csv", locale=locale(encoding="cp1250"))
+kzrkl_s <- read_csv2("KZ2020reg20201004_csv/kzrkl_s.csv", locale=locale(encoding="cp1250"))
+kzrkl <- read_csv2("KZ2020reg20201004_csv/kzrkl.csv", locale=locale(encoding="cp1250"))
+
+kzrk %>%
+  filter(MANDAT=="A") %>%
+  filter(NSTRANA == 53 | PSTRANA == 53)
+```
+
+
+```{r}
+vstrany_sods <- c(11,29,33,46,61,73,74,76)
+
+kzrk %>%
+  filter(MANDAT=="A") %>%
+  filter(KSTRANA %in% vstrany_sods)
+  
+
+vstrany_sods
+
+```
+
